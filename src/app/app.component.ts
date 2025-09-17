@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { OwnerService } from './owner.service';
+import { OrderService } from './order.service';
 
 @Component({
   selector: 'app-root',
@@ -8,70 +8,65 @@ import { OwnerService } from './owner.service';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'owner-module';
+  title = 'order-service';
 
-  constructor(private ownerService: OwnerService) {
-    this.getOwnerDetails();
+  orderDetails: any[] = [];
+  orderToUpdate: any = {
+    orderId: null,
+    customerId: '',
+    productList: '',
+    totalAmount: 0,
+    paymentMode: '',
+    status: ''
+  };
+
+  constructor(private orderService: OrderService) {
+    this.getOrderDetails();
+  }
+
+  getOrderDetails() {
+    this.orderService.getOrders().subscribe(
+      (resp) => this.orderDetails = resp,
+      (err) => console.error(err)
+    );
   }
 
   register(registerForm: NgForm) {
-    this.ownerService.registerOwner(registerForm.value).subscribe(
-      (resp: any) => {
-        console.log(resp);
+    this.orderService.registerOrder(registerForm.value).subscribe(
+      (resp) => {
         registerForm.reset();
-        this.getOwnerDetails();
+        this.getOrderDetails();
       },
-      (err: any) => {
-        console.log(err);
-      }
+      (err) => console.error(err)
     );
   }
 
-  getOwnerDetails() {
-    this.ownerService.getOwners().subscribe(
-      (resp) => {
-        console.log(resp);
-        this.ownerDetails = resp;
-      },
-      (err) => {
-        console.log(err);
-      }
+  edit(order: any) {
+    this.orderToUpdate = { ...order };
+  }
+
+  updateOrderStatus(id: any, status: string) {
+    this.orderService.updateOrderStatus(id, status).subscribe(
+      () => this.getOrderDetails(),
+      (err) => console.error(err)
     );
   }
+  updateOrder() {
+  this.orderService.updateOrder(this.orderToUpdate).subscribe(
+    (resp) => {
+      this.getOrderDetails(); // refresh table
+      // Reset form
+      this.orderToUpdate = { orderId: null, customerId: '', productList: '', totalAmount: 0, paymentMode: '', status: '' };
+    },
+    (err) => console.error(err)
+  );
+}
 
-  ownerDetails = null as any;
 
-  deleteOwner(owner: any) {
-    this.ownerService.deleteOwner(owner.ownerid).subscribe(
-      (resp) => {
-        console.log(resp);
-        this.getOwnerDetails();
-      },
-      (err) => {
-        console.log(err);
-      }
-    );
-  }
-
-  ownerToUpdate = {
-    ownerid: null as any,
-    ownername: "",
-    address: ""
-  };
-
-  edit(owner: any) {
-    this.ownerToUpdate = { ...owner };
-  }
-
-  updateOwner() {
-    this.ownerService.updateOwner(this.ownerToUpdate).subscribe(
-      (resp) => {
-        console.log(resp);
-        this.getOwnerDetails();
-      },
-      (err) => {
-        console.log(err);
-      }
+  deleteOrder(id: any) {
+    this.orderService.deleteOrder(id).subscribe(
+      () => this.getOrderDetails(),
+      (err) => console.error(err)
     );
   }
 }
